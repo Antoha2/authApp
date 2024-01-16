@@ -1,41 +1,80 @@
 package main
 
 import (
-	"log/slog"
+	"fmt"
+	"log"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/Antoha2/auth/config"
-)
-
-const (
-	envLocal = "local"
-	envDev   = "dev"
-	envProd  = "prod"
+	"github.com/Antoha2/auth/repository"
+	"github.com/Antoha2/auth/services"
+	"github.com/Antoha2/auth/transport"
+	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/stdlib"
+	"github.com/jmoiron/sqlx"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 func main() {
-	cfg := config.MustLoad()
-	log := setupLogger(cfg.Env)
+	Run()
+}
+
+func Run() {
+
+	cfg := config.GetConfig()
+	gormDB, err := initDb(cfg)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	authRep := repository.NewRepAuth(gormDB)
+	authServ := services.NewServAuth(*authRep)
+	authTrans := transport.NewWeb(authServ)
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
+
+	<-quit
+	authTrans.Stop()
 
 }
 
-func setupLogger(env string) *slog.Logger {
-	var log *slog.Logger
+func initDb(cfg *config.Config) (*gorm.DB, error) {
 
-	switch env {
-	case envLocal:
-		log = slog.New(
-			slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
-		)
-	case envDev:
-		log = slog.New(
-			slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
-		)
-	case envProd:
-		log = slog.New(
-			slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}),
-		)
+	connString := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",
+		cfg.DB.User,
+		cfg.DB.Password,
+		cfg.DB.Host,
+		cfg.DB.Port,
+		cfg.DB.Dbname,
+		cfg.DB.Sslmode,
+	)
+
+	connConfig, err := pgx.ParseConfig(connString)
+	if err != nil {
+		return nil, fmt.Errorf("1 failed to parse config: %v", err)
 	}
 
-	return log
+	// Make connections
+	dbx, err := sqlx.Open("pgx", stdlib.RegisterConnConfig(connConfig))
+	if err != nil {
+		return nil, fmt.Errorf("2 failed to create connection db: %v", err)
+	}
+
+	gormDB, err := gorm.Open(postgres.New(postgres.Config{
+		Conn: dbx,
+	}), &gorm.Config{})
+	if err != nil {
+		return nil, fmt.Errorf("3 gorm.Open(): %v", err)
+	}
+
+	err = dbx.Ping()
+	if err != nil {
+		return nil, fmt.Errorf("4 error to ping connection pool: %v", err)
+	}
+	log.Printf("Подключение к базе данных на http://127.0.0.1:%d\n", cfg.DB.Port)
+	return gormDB, nil
 }

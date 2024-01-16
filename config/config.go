@@ -1,11 +1,8 @@
 package config
 
 import (
-	"flag"
 	"os"
 	"time"
-
-	"github.com/ilyakaznacheev/cleanenv"
 )
 
 type Config struct {
@@ -14,6 +11,8 @@ type Config struct {
 	GRPC           GRPCConfig `yaml:"grpc"`
 	MigrationsPath string
 	TokenTTL       time.Duration `yaml:"token_ttl" env-default:"48h"`
+	DB             DBConfig      `yaml:"DB"`
+	HTTP           HTTPConfig
 }
 
 type GRPCConfig struct {
@@ -21,36 +20,81 @@ type GRPCConfig struct {
 	Timeout time.Duration `yaml:"timeout"`
 }
 
-func MustLoad() *Config {
-	configPath := fetchConfigPath()
-	if configPath == "" {
-		panic("config path is empty")
-	}
+const HTTPAddr = ":8180"
+const HashSalt = "antoha"
+const HashMinLength = 3
 
-	// check if file exists
-	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		panic("config file does not exist: " + configPath)
-	}
+// type Config struct {
+// 	HTTP HTTPConfig
+// 	DB   DBConfig
+// }
 
-	var cfg Config
-
-	if err := cleanenv.ReadConfig(configPath, &cfg); err != nil {
-		panic("config path is empty: " + err.Error())
-	}
-
-	return &cfg
-
+type DBConfig struct {
+	User     string
+	Password string
+	Host     string
+	Port     int
+	Dbname   string
+	Sslmode  string
 }
 
-func fetchConfigPath() string {
-	var res string
+type ContextKey string
 
-	flag.StringVar(&res, "config", "", "path to config file")
-	flag.Parse()
+type HTTPConfig struct {
+	HostAddr   string
+	ContextKey ContextKey
+}
 
-	if res == "" {
-		res = os.Getenv("CONFIG_PATH")
+// func MustLoad() *Config {
+// 	configPath := fetchConfigPath()
+// 	if configPath == "" {
+// 		panic("config path is empty")
+// 	}
+
+// 	// check if file exists
+// 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+// 		panic("config file does not exist: " + configPath)
+// 	}
+
+// 	var cfg Config
+
+// 	if err := cleanenv.ReadConfig(configPath, &cfg); err != nil {
+// 		panic("config path is empty: " + err.Error())
+// 	}
+
+// 	cfg.HTTP.HostAddr = os.Getenv("HOST_ADDR")
+// 	cfg.HTTP.ContextKey = "history"
+
+// 	return &cfg
+
+// }
+
+// func fetchConfigPath() string {
+// 	var res string
+
+// 	flag.StringVar(&res, "config", "", "path to config file")
+// 	flag.Parse()
+
+// 	if res == "" {
+// 		res = os.Getenv("CONFIG_PATH")
+// 	}
+
+// 	return res
+// }
+
+func GetConfig() *Config {
+	return &Config{
+		DB: DBConfig{
+			Dbname:   "url",
+			User:     "user",
+			Password: "user",
+			Host:     "postgres", //"localhost",
+			Port:     5432,
+			Sslmode:  "",
+		},
+		HTTP: HTTPConfig{
+			HostAddr:   os.Getenv("HOST_ADDR"),
+			ContextKey: "History",
+		},
 	}
-
-	return res
 }

@@ -2,18 +2,16 @@ package repository
 
 import (
 	"context"
-	"errors"
-	"log/slog"
-	"time"
 
 	models "github.com/Antoha2/auth"
+	"gorm.io/gorm"
 )
 
-var (
-	ErrUserExists   = errors.New("user already exists")
-	ErrUserNotFound = errors.New("user not found")
-	ErrAppNotFound  = errors.New("app not found")
-)
+// var (
+// 	ErrUserExists   = errors.New("user already exists")
+// 	ErrUserNotFound = errors.New("user not found")
+// 	ErrAppNotFound  = errors.New("app not found")
+// )
 
 type AuthRepository interface {
 	UserSaver(ctx context.Context, email string, passHash []byte) (uid int64, err error)
@@ -22,13 +20,13 @@ type AuthRepository interface {
 }
 
 type RepAuth struct {
-	*slog.Logger
+	DB *gorm.DB
 	AuthRepository
-	TokenTTL time.Duration
 }
 
-func New(log *slog.Logger, rep AuthRepository, tokenTTL time.Duration) *RepAuth {
-	return &RepAuth{Logger: log,
-		AuthRepository: rep,
-		TokenTTL:       tokenTTL}
+func NewRepAuth(dbx *gorm.DB) *RepAuth {
+	return &RepAuth{
+
+		DB: dbx,
+	}
 }
