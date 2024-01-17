@@ -1,0 +1,117 @@
+version: '3'
+services:
+
+  # task:
+  #   container_name: task
+  #   image: golang:1.18
+  
+  #   depends_on:
+  #      - postgres
+  #      - auth
+  #      - rabbitmq
+  #   environment:
+  #     ENVIRONMENT: development
+  #   volumes:
+  #     - ./task/:/app/
+  #   working_dir: /app
+  #   expose:
+  #     - 8181
+  #   ports:
+  #     - '8181:8181'
+  #   command: >
+  #    bash -c "go get
+  #    && go run ./cmd/main.go"
+   
+
+  auth:
+    container_name: auth
+    image: golang:1.21.4
+  
+    depends_on:
+       - postgres
+      #  - rabbitmq
+    environment:
+      ENVIRONMENT: development
+    volumes:
+      - ./auth/:/app/
+    working_dir: /app
+    expose:
+      - 8180
+      # - 8183
+    ports:
+      - '8180:8180'
+      # - '8183:8183'
+    command: >
+     bash -c "go get
+     && go run ./cmd/main.go"
+
+  postgres:
+    container_name: postgres
+    image: postgres:latest
+
+    environment:
+     POSTGRES_DB: url
+     POSTGRES_USER:  user
+     POSTGRES_PASSWORD: user
+    ports:
+      - '5432:5432'
+    volumes:
+      - ./../db:/var/lib/postgresql
+
+
+  # rabbitmq:
+  #     container_name: "rabbitmq"
+  #     image: rabbitmq:3.10.6-management #rabbitmq:3.8
+  #     environment:
+  #         - RABBITMQ_DEFAULT_USER=guest
+  #         - RABBITMQ_DEFAULT_PASS=guest
+  #     ports:
+  #           # AMQP protocol port
+  #         - '5672:5672'
+  #           # HTTP management UI
+  #         - '15672:15672'
+
+
+  # loghis:
+  #   container_name: loghis
+  #   image: golang:1.18
+  
+  #   depends_on:
+  #     - rabbitmq
+  #   environment:
+  #     ENVIRONMENT: development
+  #   volumes:
+  #     - ./loghis/:/app/
+  #   working_dir: /app
+  #   expose:
+  #     - 8182
+  #   ports:
+  #     - '8182:8182'
+  #   command: >
+  #    bash -c "go get ./cmd
+  #    && go run ./cmd/main.go"
+
+
+# //////////////////////////////////////////////////
+#  rabbitmq:
+#     container_name: rabbitmq
+#     image: rabbitmq:3.8 #rabbitmq:3.10.6
+#     # image: rabbitmq:3-management
+
+#     environment:
+#       # ENVIRONMENT: development
+#       RABBITMQ_DEFAULT_USER: guest
+#       RABBITMQ_DEFAULT_PASSWORD: guest
+#     # volumes:
+#       # - ./rabbitmq/:/app/
+#       # - ./.docker/rabbitmq/etc/:/etc/rabbitmq/
+#       # - ./.docker/rabbitmq/data/:/data/rabbitmq/
+#       # - ./.docker/rabbitmq/logs/:/logs/rabbitmq/
+#     # working_dir: /app
+#     # expose:
+#     #   - 5672
+#     #   - 8183
+#     #   - 15672
+#     ports:
+#       - '5672:5672'
+#       - '15672:15672'
