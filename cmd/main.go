@@ -7,10 +7,13 @@ import (
 	"os/signal"
 	"syscall"
 
+	logger "github.com/Antoha2/auth/cmd/logger"
 	"github.com/Antoha2/auth/config"
 	"github.com/Antoha2/auth/repository"
 	"github.com/Antoha2/auth/services"
-	"github.com/Antoha2/auth/transport"
+
+	// "github.com/Antoha2/auth/transport/grpc"
+	transport "github.com/Antoha2/auth/transport/http"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/stdlib"
 	"github.com/jmoiron/sqlx"
@@ -24,15 +27,19 @@ func main() {
 
 func Run() {
 
-	cfg := config.GetConfig()
+	cfg := config.MustLoad()
+	log := logger.SetupLogger(logger.EnvLocal)
+
 	gormDB, err := initDb(cfg)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 	authRep := repository.NewRepAuth(gormDB)
-	authServ := services.NewServAuth(*authRep)
-	authTrans := transport.NewWeb(authServ)
+	authServ := services.NewServAuth(*authRep, log)
+	authTrans := transport.NewWeb(authServ, log, cfg.HTTP.HostAddr)
+
+	go authTrans.StartHTTP()
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
@@ -45,12 +52,12 @@ func Run() {
 func initDb(cfg *config.Config) (*gorm.DB, error) {
 
 	connString := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",
-		cfg.DB.User,
-		cfg.DB.Password,
-		cfg.DB.Host,
-		cfg.DB.Port,
-		cfg.DB.Dbname,
-		cfg.DB.Sslmode,
+		cfg.DBConfig.User,
+		cfg.DBConfig.Password,
+		cfg.DBConfig.Host,
+		cfg.DBConfig.Port,
+		cfg.DBConfig.Dbname,
+		cfg.DBConfig.Sslmode,
 	)
 
 	connConfig, err := pgx.ParseConfig(connString)
@@ -75,6 +82,6 @@ func initDb(cfg *config.Config) (*gorm.DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("4 error to ping connection pool: %v", err)
 	}
-	log.Printf("Подключение к базе данных на http://127.0.0.1:%d\n", cfg.DB.Port)
+	log.Printf("Подключение к базе данных на http://127.0.0.1:%d\n", cfg.DBConfig.Port)
 	return gormDB, nil
 }

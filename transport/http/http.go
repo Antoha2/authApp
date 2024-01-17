@@ -2,6 +2,7 @@ package transport
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 
 	authService "github.com/Antoha2/auth/services"
@@ -10,11 +11,15 @@ import (
 type webImpl struct {
 	authService authService.AuthService
 	server      *http.Server
+	log         *slog.Logger
+	port        int
 }
 
-func NewWeb(authService authService.AuthService) *webImpl {
+func NewWeb(authService authService.AuthService, log *slog.Logger, port int) *webImpl {
 	return &webImpl{
 		authService: authService,
+		log:         log,
+		port:        port,
 	}
 }
 

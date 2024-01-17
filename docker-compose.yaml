@@ -1,7 +1,44 @@
 version: '3'
 services:
 
-  # task:
+ 
+  auth:
+    container_name: auth
+    image: golang:1.21.4
+  
+    depends_on:
+       - postgres
+      #  - rabbitmq
+    environment:
+      ENVIRONMENT: development
+    volumes:
+      - ./:/app/
+    working_dir: /app
+    expose:
+      - 8180
+      # - 8183
+    ports:
+      - '8180:8180'
+      # - '8183:8183'
+    command: >
+     bash -c "go get 
+     && go run ./cmd/main.go --config=./config/config_local.yaml"
+
+  postgres:
+    container_name: postgres
+    image: postgres:latest
+
+    environment:
+     POSTGRES_DB: auth
+     POSTGRES_USER:  user
+     POSTGRES_PASSWORD: user
+    ports:
+      - '5432:5432'
+    volumes:
+      - ./../db:/var/lib/postgresql
+
+
+ # task:
   #   container_name: task
   #   image: golang:1.18
   
@@ -22,41 +59,6 @@ services:
   #    bash -c "go get
   #    && go run ./cmd/main.go"
    
-
-  auth:
-    container_name: auth
-    image: golang:1.21.4
-  
-    depends_on:
-       - postgres
-      #  - rabbitmq
-    environment:
-      ENVIRONMENT: development
-    volumes:
-      - ./auth/:/app/
-    working_dir: /app
-    expose:
-      - 8180
-      # - 8183
-    ports:
-      - '8180:8180'
-      # - '8183:8183'
-    command: >
-     bash -c "go get
-     && go run ./cmd/main.go"
-
-  postgres:
-    container_name: postgres
-    image: postgres:latest
-
-    environment:
-     POSTGRES_DB: url
-     POSTGRES_USER:  user
-     POSTGRES_PASSWORD: user
-    ports:
-      - '5432:5432'
-    volumes:
-      - ./../db:/var/lib/postgresql
 
 
   # rabbitmq:

@@ -2,6 +2,7 @@ package endpoints
 
 import (
 	"context"
+	"log"
 
 	authservice "github.com/Antoha2/auth/services"
 
@@ -25,7 +26,7 @@ func MakeLoginEndpoint(s authservice.AuthService) endpoint.Endpoint {
 
 		_ = request.(LoginRequest)
 		token := "!!!"
-
+		log.Println(token)
 		// token, err := s.GenerateToken(req.Username, req.Password)
 		// if err != nil {
 		// 	log.Println(err)

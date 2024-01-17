@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strconv"
 
-	"github.com/Antoha2/auth/config"
 	authEndpoints "github.com/Antoha2/auth/transport/endpoints"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
@@ -17,14 +17,14 @@ func (wImpl *webImpl) StartHTTP() error {
 		//httptransport.ServerBefore(wImpl.UserIdentify),
 	}
 
-	signInHandler := httptransport.NewServer(
+	loginHandler := httptransport.NewServer(
 		authEndpoints.MakeLoginEndpoint(wImpl.authService),
 		decodeMakeLoginRequest,
 		encodeResponse,
 		AuthOptions...,
 	)
 
-	signUpHandler := httptransport.NewServer(
+	registerHandler := httptransport.NewServer(
 		authEndpoints.MakeRegisterEndpoint(wImpl.authService),
 		decodeMakeRegisterRequest,
 		encodeResponse,
@@ -33,10 +33,10 @@ func (wImpl *webImpl) StartHTTP() error {
 
 	r := mux.NewRouter()
 
-	r.Methods("POST").Path("/auth/sign-in").Handler(signInHandler)
-	r.Methods("POST").Path("/auth/sign-up").Handler(signUpHandler)
+	r.Methods("POST").Path("/login").Handler(loginHandler)
+	r.Methods("POST").Path("/register").Handler(registerHandler)
 
-	wImpl.server = &http.Server{Addr: config.HTTPAddr}
+	wImpl.server = &http.Server{Addr: ":" + strconv.Itoa(wImpl.port)}
 	log.Printf("(auth) Запуск HTTP-сервера на http://127.0.0.1%s\n", wImpl.server.Addr) //:8180
 
 	if err := http.ListenAndServe(wImpl.server.Addr, r); err != nil {

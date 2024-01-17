@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"log/slog"
 
 	"github.com/Antoha2/auth/repository"
 	AuthRepository "github.com/Antoha2/auth/repository"
@@ -18,12 +19,14 @@ type AuthService interface {
 }
 
 type servImpl struct {
+	log *slog.Logger
 	AuthService
 	rep AuthRepository.RepAuth
 }
 
-func NewServAuth(authRep repository.RepAuth) *servImpl {
+func NewServAuth(authRep repository.RepAuth, log *slog.Logger) *servImpl {
 	return &servImpl{
 		rep: authRep,
+		log: log,
 	}
 }
