@@ -5,11 +5,10 @@ grpc:
   grpctimeout: 10h
 http:
   httpport: 8180
-  httpcontextkey: "History"
 postgres:
   dbname: "auth"
   dbuser: "user"
   dbpassword: "user"
-  dbhost: "postgres" #//"postgres", //localhost
+  dbhost: "postgres" #postgres localhost
   dbport: 5432
-  dbsslmode: ""
+  dbsslmode: "disable"

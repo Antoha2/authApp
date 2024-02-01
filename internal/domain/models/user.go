@@ -5,9 +5,3 @@ type User struct {
 	Email    string
 	PassHash []byte
 }
-
-type App struct {
-	ID     int
-	Name   string
-	Secret string
-}

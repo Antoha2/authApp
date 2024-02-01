@@ -3,19 +3,20 @@ package endpoints
 import (
 	"context"
 
-	authservice "github.com/Antoha2/auth/services"
+	"github.com/Antoha2/auth/internal/services"
 	"github.com/go-kit/kit/endpoint"
 )
 
 type RegisterRequest struct {
-	FirstName string `json:"firstname" gorm:"column:firstname"`
-	LastName  string `json:"lastname" gorm:"column:lastname"`
-	Username  string `json:"username" gorm:"column:username"`
-	Password  string `json:"password"`
+	// FirstName string `json:"firstname"`
+	// LastName  string `json:"lastname"`
+	// Username  string `json:"username"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 type RegisterResponse struct {
-	UserId int `json:"user_id"`
+	UserId int64 `json:"user_id"`
 }
 
 // const (
@@ -24,30 +25,27 @@ type RegisterResponse struct {
 // 	roleDev   = "dev"
 // )
 
-func MakeRegisterEndpoint(s authservice.AuthService) endpoint.Endpoint {
+func MakeRegisterEndpoint(s services.AuthService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 
-		_ = request.(RegisterRequest)
-		// req := request.(RegisterRequest)
+		req := request.(RegisterRequest)
+		userId, err := s.RegisterNewUser(ctx, req.Email, req.Password)
+		if err != nil {
+			return nil, err
+		}
 
-		// inputUser := new(helper.User)
+		// inputUser := new(services.ServRegUser)
+		// inputUser.Password = req.Password
+		// inputUser.Email = req.Email
 		// inputRoles := new(helper.UsersRoles)
 
 		// inputUser.FirstName = req.FirstName
 		// inputUser.LastName = req.LastName
-		// inputUser.Password = req.Password
+
 		// inputUser.Username = req.Username
 
 		// inputRoles.Roles = append(inputRoles.Roles, roleAdmin)
 		// inputRoles.Roles = append(inputRoles.Roles, roleDev) // ?!? !!!!!!!!!!!!!!!!!!!!!!!!!!
-
-		// userId, err := s.CreateUser(inputUser, inputRoles)
-
-		// if err != nil {
-		// 	return nil, err
-		// }
-
-		userId := 1122
 
 		return RegisterResponse{UserId: userId}, nil
 	}

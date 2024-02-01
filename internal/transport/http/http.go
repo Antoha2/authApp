@@ -5,25 +5,30 @@ import (
 	"log/slog"
 	"net/http"
 
-	authService "github.com/Antoha2/auth/services"
+	authService "github.com/Antoha2/auth/internal/services"
 )
 
-type webImpl struct {
+type regUser struct {
+	name  string `json:"name"`
+	email string `json:"email"`
+}
+
+type apiImpl struct {
 	authService authService.AuthService
 	server      *http.Server
 	log         *slog.Logger
 	port        int
 }
 
-func NewWeb(authService authService.AuthService, log *slog.Logger, port int) *webImpl {
-	return &webImpl{
+func NewApi(authService authService.AuthService, log *slog.Logger, port int) *apiImpl {
+	return &apiImpl{
 		authService: authService,
 		log:         log,
 		port:        port,
 	}
 }
 
-func (wImpl *webImpl) Stop() {
+func (wImpl *apiImpl) Stop() {
 
 	if err := wImpl.server.Shutdown(context.TODO()); err != nil {
 		panic(err) // failure/timeout shutting down the server gracefully

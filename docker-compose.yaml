@@ -21,12 +21,12 @@ services:
       - '8180:8180'
       # - '8183:8183'
     command: >
-     bash -c "go get 
-     && go run ./cmd/main.go --config=./config/config_local.yaml"
+     bash -c "go run ./cmd/main.go --config=./internal/config/config_local.yaml"
+    #  go get && 
 
   postgres:
     container_name: postgres
-    image: postgres:latest
+    image: postgres:16.1-alpine3.19
 
     environment:
      POSTGRES_DB: auth

@@ -35,7 +35,7 @@ type DBConfig struct {
 type ContextKey string
 type HTTPConfig struct {
 	HostAddr   int        `yaml:"httpport"`
-	ContextKey ContextKey `yaml:"httpContextKey"`
+	ContextKey ContextKey `yaml:"httpcontextkey"`
 }
 
 // const HTTPAddr = ":8180"

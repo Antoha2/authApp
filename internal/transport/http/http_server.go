@@ -7,12 +7,12 @@ import (
 	"net/http"
 	"strconv"
 
-	authEndpoints "github.com/Antoha2/auth/transport/endpoints"
+	authEndpoints "github.com/Antoha2/auth/internal/transport/endpoints"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
 )
 
-func (wImpl *webImpl) StartHTTP() error {
+func (wImpl *apiImpl) StartHTTP() error {
 	AuthOptions := []httptransport.ServerOption{
 		//httptransport.ServerBefore(wImpl.UserIdentify),
 	}

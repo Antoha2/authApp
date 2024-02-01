@@ -7,13 +7,13 @@ import (
 	"os/signal"
 	"syscall"
 
-	logger "github.com/Antoha2/auth/cmd/logger"
-	"github.com/Antoha2/auth/config"
-	"github.com/Antoha2/auth/repository"
-	"github.com/Antoha2/auth/services"
+	"github.com/Antoha2/auth/internal/config"
+	"github.com/Antoha2/auth/internal/repository"
+	"github.com/Antoha2/auth/internal/services"
+	logger "github.com/Antoha2/auth/pkg/logger"
 
 	// "github.com/Antoha2/auth/transport/grpc"
-	transport "github.com/Antoha2/auth/transport/http"
+	transport "github.com/Antoha2/auth/internal/transport/http"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/stdlib"
 	"github.com/jmoiron/sqlx"
@@ -35,9 +35,9 @@ func Run() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	authRep := repository.NewRepAuth(gormDB)
-	authServ := services.NewServAuth(*authRep, log)
-	authTrans := transport.NewWeb(authServ, log, cfg.HTTP.HostAddr)
+	authRep := repository.NewRepAuth(log, gormDB, cfg.TokenTTL)
+	authServ := services.NewServAuth(log, authRep)
+	authTrans := transport.NewApi(authServ, log, cfg.HTTP.HostAddr)
 
 	go authTrans.StartHTTP()
 

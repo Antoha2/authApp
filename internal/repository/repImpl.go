@@ -4,15 +4,18 @@ import (
 	"context"
 	"log"
 
-	models "github.com/Antoha2/auth"
+	"github.com/Antoha2/auth/internal/domain/models"
 	//"github.com/mattn/go-sqlite3"
 )
 
 // SaveUser saves user to db.
-func (r *RepAuth) SaveUser(ctx context.Context, email string, passHash []byte) (int64, error) {
-	const op = "storage.sqlite.SaveUser"
+func (r *RepAuth) UserSaver(ctx context.Context, email string, passHash []byte) (int64, error) {
+	const op = "storage.postgres.SaveUser"
 
 	log.Println("Простенький зaпрос на добавление пользователя")
+
+	log.Println("3!!!!!!!!!!!!!!!!!!!", email, passHash)
+
 	/*
 		// Простенький зaпрос на добавление пользователя
 		stmt, err := s.db.Prepare("INSERT INTO users(email, pass_hash) VALUES(?, ?)")

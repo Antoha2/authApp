@@ -5,8 +5,8 @@ import (
 	"errors"
 	"log/slog"
 
-	"github.com/Antoha2/auth/repository"
-	AuthRepository "github.com/Antoha2/auth/repository"
+	"github.com/Antoha2/auth/internal/repository"
+	AuthRepository "github.com/Antoha2/auth/internal/repository"
 )
 
 var (
@@ -21,10 +21,18 @@ type AuthService interface {
 type servImpl struct {
 	log *slog.Logger
 	AuthService
-	rep AuthRepository.RepAuth
+	rep *AuthRepository.RepAuth
 }
 
-func NewServAuth(authRep repository.RepAuth, log *slog.Logger) *servImpl {
+type ServRegUser struct {
+	FirstName string
+	LastName  string
+	Username  string
+	Password  string
+	Email     string
+}
+
+func NewServAuth(log *slog.Logger, authRep *repository.RepAuth) *servImpl {
 	return &servImpl{
 		rep: authRep,
 		log: log,

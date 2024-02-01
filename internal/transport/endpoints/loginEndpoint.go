@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	authservice "github.com/Antoha2/auth/services"
+	authservice "github.com/Antoha2/auth/internal/services"
 
 	"github.com/go-kit/kit/endpoint"
 )
