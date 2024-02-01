@@ -7,7 +7,7 @@ import (
 	"time"
 
 	models "github.com/Antoha2/auth/internal/domain/models"
-	"gorm.io/gorm"
+	"github.com/jmoiron/sqlx"
 )
 
 var (
@@ -24,12 +24,12 @@ type AuthRepository interface {
 
 type RepAuth struct {
 	log *slog.Logger
-	DB  *gorm.DB
+	DB  *sqlx.DB
 	AuthRepository
 	TokenTTL time.Duration
 }
 
-func NewRepAuth(log *slog.Logger, dbx *gorm.DB, tokenTTL time.Duration) *RepAuth {
+func NewRepAuth(log *slog.Logger, dbx *sqlx.DB, tokenTTL time.Duration) *RepAuth {
 	return &RepAuth{
 		log:      log,
 		DB:       dbx,

@@ -1,6 +1,5 @@
 version: '3'
 services:
-
  
   auth:
     container_name: auth
@@ -36,84 +35,26 @@ services:
       - '5432:5432'
     volumes:
       - ./../db:/var/lib/postgresql
+    healthcheck:
+      test: pg_isready -U user -d auth
+      interval: 10s
+      retries: 5
+      start_period: 5s
+      timeout: 60s
 
-
- # task:
-  #   container_name: task
-  #   image: golang:1.18
-  
-  #   depends_on:
-  #      - postgres
-  #      - auth
-  #      - rabbitmq
-  #   environment:
-  #     ENVIRONMENT: development
-  #   volumes:
-  #     - ./task/:/app/
-  #   working_dir: /app
-  #   expose:
-  #     - 8181
-  #   ports:
-  #     - '8181:8181'
-  #   command: >
-  #    bash -c "go get
-  #    && go run ./cmd/main.go"
-   
-
-
-  # rabbitmq:
-  #     container_name: "rabbitmq"
-  #     image: rabbitmq:3.10.6-management #rabbitmq:3.8
-  #     environment:
-  #         - RABBITMQ_DEFAULT_USER=guest
-  #         - RABBITMQ_DEFAULT_PASS=guest
-  #     ports:
-  #           # AMQP protocol port
-  #         - '5672:5672'
-  #           # HTTP management UI
-  #         - '15672:15672'
-
-
-  # loghis:
-  #   container_name: loghis
-  #   image: golang:1.18
-  
-  #   depends_on:
-  #     - rabbitmq
-  #   environment:
-  #     ENVIRONMENT: development
-  #   volumes:
-  #     - ./loghis/:/app/
-  #   working_dir: /app
-  #   expose:
-  #     - 8182
-  #   ports:
-  #     - '8182:8182'
-  #   command: >
-  #    bash -c "go get ./cmd
-  #    && go run ./cmd/main.go"
-
-
-# //////////////////////////////////////////////////
-#  rabbitmq:
-#     container_name: rabbitmq
-#     image: rabbitmq:3.8 #rabbitmq:3.10.6
-#     # image: rabbitmq:3-management
-
-#     environment:
-#       # ENVIRONMENT: development
-#       RABBITMQ_DEFAULT_USER: guest
-#       RABBITMQ_DEFAULT_PASSWORD: guest
-#     # volumes:
-#       # - ./rabbitmq/:/app/
-#       # - ./.docker/rabbitmq/etc/:/etc/rabbitmq/
-#       # - ./.docker/rabbitmq/data/:/data/rabbitmq/
-#       # - ./.docker/rabbitmq/logs/:/logs/rabbitmq/
-#     # working_dir: /app
-#     # expose:
-#     #   - 5672
-#     #   - 8183
-#     #   - 15672
-#     ports:
-#       - '5672:5672'
-#       - '15672:15672'
+  migrate:
+    container_name: migrate
+    image: migrate/migrate:v4.17.0
+    volumes:
+      - ./migrations:/migrations
+    entrypoint:
+      [
+        "migrate",
+        "-path",
+        "/migrations",
+        "-database",
+        "postgres://user:user@postgres:5432/auth?sslmode=disable",
+        "up"
+      ]
+    depends_on:
+       - postgres

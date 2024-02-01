@@ -2,10 +2,10 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/Antoha2/auth/internal/domain/models"
-	//"github.com/mattn/go-sqlite3"
 )
 
 // SaveUser saves user to db.
@@ -14,41 +14,34 @@ func (r *RepAuth) UserSaver(ctx context.Context, email string, passHash []byte) 
 
 	log.Println("Простенький зaпрос на добавление пользователя")
 
-	log.Println("3!!!!!!!!!!!!!!!!!!!", email, passHash)
+	// stmt, err := r.DB.Prepare("INSERT INTO users (email, pass_hash) VALUES ($1, $2)")
+	// if err != nil {
+	// 	return 0, fmt.Errorf("%s: %w", op, err)
+	// }
 
-	/*
-		// Простенький зaпрос на добавление пользователя
-		stmt, err := s.db.Prepare("INSERT INTO users(email, pass_hash) VALUES(?, ?)")
+	// defer stmt.Close()
 
-		if err != nil {
-			return 0, fmt.Errorf("%s: %w", op, err)
-		}
+	// res, err := stmt.ExecContext(ctx, email, passHash)
+	// if err != nil {
+	// 	return 0, fmt.Errorf("%s: %w", op, err)
+	// }
 
-		// Выполняем запрос, передав параметры
-		res, err := stmt.ExecContext(ctx, email, passHash)
-		if err != nil {
-			var sqliteErr sqlite3.Error
+	// id, err := res.LastInsertId()
+	// if err != nil {
+	// 	return 0, fmt.Errorf("%s: %w", op, err)
+	// }
+	var id int64
+	query := "INSERT INTO users (email, pass_hash) VALUES ($1, $2) RETURNING id"
+	row := r.DB.QueryRowContext(ctx, query, email, passHash)
+	if err := row.Scan(&id); err != nil {
+		return 0, fmt.Errorf("%s: %w", op, err) //errors.Wrap(err, fmt.Sprintf("sql insert User failed, query: %s", query))
+	}
 
-			// Небольшое кунг-фу для выявления ошибки ErrConstraintUnique
-			// (см. подробности ниже)
-			if errors.As(err, &sqliteErr) && sqliteErr.ExtendedCode == sqlite3.ErrConstraintUnique {
-				return 0, fmt.Errorf("%s: %w", op, storage.ErrUserExists)
-			}
-
-			return 0, fmt.Errorf("%s: %w", op, err)
-		}
-
-		// Получаем ID созданной записи
-		id, err := res.LastInsertId()
-		if err != nil {
-			return 0, fmt.Errorf("%s: %w", op, err)
-		}
-	*/
-	return 1, nil
+	return id, nil
 }
 
 // User returns user by email.
-func (r *RepAuth) User(ctx context.Context, email string) (models.User, error) {
+func (r *RepAuth) UserProvider(ctx context.Context, email string) (models.User, error) {
 	const op = "storage.sqlite.User"
 	user := new(models.User)
 	log.Println("Простенький зaпрос на поиск пользователя")
