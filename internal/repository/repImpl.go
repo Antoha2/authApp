@@ -2,39 +2,43 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
-	"log"
 
 	"github.com/Antoha2/auth/internal/domain/models"
 )
 
 // SaveUser saves user to db.
 func (r *RepAuth) UserSaver(ctx context.Context, email string, passHash []byte) (int64, error) {
-	const op = "storage.postgres.SaveUser"
+	const op = "repository.postgres.SaveUser"
 
-	log.Println("Простенький зaпрос на добавление пользователя")
+	//проверка уникальности пользователя
+	var count int
+	stmt, err := r.DB.Prepare("SELECT COUNT(id) FROM users WHERE email = $1")
+	if err != nil {
+		return 0, fmt.Errorf("%s: %w", op, err)
+	}
 
-	// stmt, err := r.DB.Prepare("INSERT INTO users (email, pass_hash) VALUES ($1, $2)")
-	// if err != nil {
-	// 	return 0, fmt.Errorf("%s: %w", op, err)
-	// }
+	if err = stmt.QueryRowContext(ctx, email).Scan(&count); err != nil {
+		return 0, fmt.Errorf("%s: %w", op, err)
+	}
 
-	// defer stmt.Close()
+	defer stmt.Close()
 
-	// res, err := stmt.ExecContext(ctx, email, passHash)
-	// if err != nil {
-	// 	return 0, fmt.Errorf("%s: %w", op, err)
-	// }
+	if count > 0 {
+		return 0, fmt.Errorf("%s: %w", op, ErrUserExists)
+	}
 
-	// id, err := res.LastInsertId()
-	// if err != nil {
-	// 	return 0, fmt.Errorf("%s: %w", op, err)
-	// }
+	//добавление пользователя в базу
 	var id int64
-	query := "INSERT INTO users (email, pass_hash) VALUES ($1, $2) RETURNING id"
-	row := r.DB.QueryRowContext(ctx, query, email, passHash)
-	if err := row.Scan(&id); err != nil {
-		return 0, fmt.Errorf("%s: %w", op, err) //errors.Wrap(err, fmt.Sprintf("sql insert User failed, query: %s", query))
+	stmt, err = r.DB.Prepare("INSERT INTO users (email, pass_hash) VALUES ($1, $2) RETURNING id")
+	if err != nil {
+		return 0, fmt.Errorf("%s: %w", op, err)
+	}
+
+	if err = stmt.QueryRowContext(ctx, email, passHash).Scan(&id); err != nil {
+		return 0, fmt.Errorf("%s: %w", op, err)
 	}
 
 	return id, nil
@@ -42,52 +46,50 @@ func (r *RepAuth) UserSaver(ctx context.Context, email string, passHash []byte) 
 
 // User returns user by email.
 func (r *RepAuth) UserProvider(ctx context.Context, email string) (models.User, error) {
-	const op = "storage.sqlite.User"
+	const op = "repository.postgres.User"
+
 	user := new(models.User)
-	log.Println("Простенький зaпрос на поиск пользователя")
-	/*
-	   stmt, err := s.db.Prepare("SELECT id, email, pass_hash FROM users WHERE email = ?")
-	   if err != nil {
-	       return models.User{}, fmt.Errorf("%s: %w", op, err)
-	   }
+	stmt, err := r.DB.Prepare("SELECT id, email, pass_hash FROM users WHERE email = $1")
+	if err != nil {
+		return models.User{}, fmt.Errorf("%s: %w", op, err)
+	}
 
-	   row := stmt.QueryRowContext(ctx, email)
+	defer stmt.Close()
 
-	   var user models.User
-	   err = row.Scan(&user.ID, &user.Email, &user.PassHash)
-	   if err != nil {
-	       if errors.Is(err, sql.ErrNoRows) {
-	           return models.User{}, fmt.Errorf("%s: %w", op, storage.ErrUserNotFound)
-	       }
+	row := stmt.QueryRowContext(ctx, email)
 
-	       return models.User{}, fmt.Errorf("%s: %w", op, err)
-	   }
-	*/
+	err = row.Scan(&user.ID, &user.Email, &user.PassHash)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return models.User{}, fmt.Errorf("%s: %w", op, ErrUserNotFound)
+		}
+
+		return models.User{}, fmt.Errorf("%s: %w", op, err)
+	}
+
 	return *user, nil
 }
 
 // App returns app by id.
 func (r *RepAuth) App(ctx context.Context, id int) (models.App, error) {
-	const op = "storage.sqlite.App"
-	app := new(models.App)
-	log.Println("Простенький зaпрос на поиск app")
-	/*
-	   stmt, err := s.db.Prepare("SELECT id, name, secret FROM apps WHERE id = ?")
-	   if err != nil {
-	       return models.App{}, fmt.Errorf("%s: %w", op, err)
-	   }
+	const op = "repository.postgres.App"
 
-	   row := stmt.QueryRowContext(ctx, id)
+	stmt, err := r.DB.Prepare("SELECT id, name, secret FROM apps WHERE id = $1")
+	if err != nil {
+		return models.App{}, fmt.Errorf("%s: %w", op, err)
+	}
 
-	   var app models.App
-	   err = row.Scan(&app.ID, &app.Name, &app.Secret)
-	   if err != nil {
-	       if errors.Is(err, sql.ErrNoRows) {
-	           return models.App{}, fmt.Errorf("%s: %w", op, storage.ErrAppNotFound)
-	       }
+	row := stmt.QueryRowContext(ctx, id)
 
-	       return models.App{}, fmt.Errorf("%s: %w", op, err)
-	   }
-	*/
-	return *app, nil
+	var app models.App
+	err = row.Scan(&app.ID, &app.Name, &app.Secret)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return models.App{}, fmt.Errorf("%s: %w", op, ErrAppNotFound)
+		}
+
+		return models.App{}, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return app, nil
 }

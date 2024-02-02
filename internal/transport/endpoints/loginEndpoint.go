@@ -10,7 +10,7 @@ import (
 )
 
 type LoginRequest struct {
-	Username string `json:"username"`
+	Username string `json:"email"`
 	Password string `json:"password"`
 	Roles    []string
 }
@@ -22,16 +22,12 @@ type LoginResponse struct {
 func MakeLoginEndpoint(s authservice.AuthService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 
-		//req := request.(LoginRequest)
-
-		_ = request.(LoginRequest)
-		token := "!!!"
-		log.Println(token)
-		// token, err := s.GenerateToken(req.Username, req.Password)
-		// if err != nil {
-		// 	log.Println(err)
-		// 	return nil, err
-		// }
+		req := request.(LoginRequest)
+		token, err := s.Login(ctx, req.Username, req.Password, 0)
+		if err != nil {
+			log.Println(err)
+			return nil, err
+		}
 
 		return LoginResponse{Token: token}, nil
 	}
